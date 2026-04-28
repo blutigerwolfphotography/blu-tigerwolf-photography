@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0c0c0d;
+  --foreground: #ececec;
+  --muted: #8a8a8f;
+  --card: #141416;
+  --border: #2a2a2e;
+  --accent: #c9a962;
+  --accent-muted: #8a7544;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 35%, transparent);
+}
