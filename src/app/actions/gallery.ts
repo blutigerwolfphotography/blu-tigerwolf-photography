@@ -20,13 +20,20 @@ function fileNameFromKey(key: string): string {
 }
 
 export async function loadGalleryImages(): Promise<{ ok: true; images: GalleryImage[] } | { ok: false; message: string }> {
-  const token = (await cookies()).get(COOKIE_NAME)?.value;
-  const session = token ? parseSessionToken(token) : null;
-  if (!session) {
-    return { ok: false, message: "Your session has expired. Please sign in again." };
-  }
-
   try {
+    const token = (await cookies()).get(COOKIE_NAME)?.value;
+    let session: ReturnType<typeof parseSessionToken> = null;
+    try {
+      session = token ? parseSessionToken(token) : null;
+    } catch (err) {
+      console.error("parseSessionToken failed", err);
+      session = null;
+    }
+
+    if (!session) {
+      return { ok: false, message: "Your session has expired. Please sign in again." };
+    }
+
     const client = getR2Client();
     const keys = await listImageKeysForFolder(session.folderName);
     const images: GalleryImage[] = [];
@@ -44,6 +51,15 @@ export async function loadGalleryImages(): Promise<{ ok: true; images: GalleryIm
 
     return { ok: true, images };
   } catch (err) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      // Let Next.js handle dynamic rendering constraints during build.
+      (err as { digest?: unknown }).digest === "DYNAMIC_SERVER_USAGE"
+    ) {
+      throw err;
+    }
     console.error("loadGalleryImages failed", err);
     return {
       ok: false,

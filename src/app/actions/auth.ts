@@ -19,6 +19,11 @@ export async function loginAction(_prev: LoginState | undefined, formData: FormD
     return { error: "Please enter your email and your child’s name." };
   }
 
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 16) {
+    console.error("loginAction: SESSION_SECRET missing/too short");
+    return { error: "This gallery is not configured yet. Please contact your photographer." };
+  }
+
   const supabase = getSupabaseAdmin();
   const emailPattern = escapeIlikeExact(email);
   const { data: rows, error } = await supabase
