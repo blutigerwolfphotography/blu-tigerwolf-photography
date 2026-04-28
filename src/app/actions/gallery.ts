@@ -26,20 +26,29 @@ export async function loadGalleryImages(): Promise<{ ok: true; images: GalleryIm
     return { ok: false, message: "Your session has expired. Please sign in again." };
   }
 
-  const client = getR2Client();
-  const keys = await listImageKeysForFolder(session.folderName);
-  const images: GalleryImage[] = [];
+  try {
+    const client = getR2Client();
+    const keys = await listImageKeysForFolder(session.folderName);
+    const images: GalleryImage[] = [];
 
-  for (const key of keys) {
-    const name = fileNameFromKey(key);
-    const viewCmd = buildGetObjectCommand(key);
-    const dlCmd = buildDownloadObjectCommand(key, name);
-    const [url, downloadUrl] = await Promise.all([
-      getSignedUrl(client, viewCmd, { expiresIn: PRESIGN_TTL_SEC }),
-      getSignedUrl(client, dlCmd, { expiresIn: PRESIGN_TTL_SEC }),
-    ]);
-    images.push({ key, url, downloadUrl, name });
+    for (const key of keys) {
+      const name = fileNameFromKey(key);
+      const viewCmd = buildGetObjectCommand(key);
+      const dlCmd = buildDownloadObjectCommand(key, name);
+      const [url, downloadUrl] = await Promise.all([
+        getSignedUrl(client, viewCmd, { expiresIn: PRESIGN_TTL_SEC }),
+        getSignedUrl(client, dlCmd, { expiresIn: PRESIGN_TTL_SEC }),
+      ]);
+      images.push({ key, url, downloadUrl, name });
+    }
+
+    return { ok: true, images };
+  } catch (err) {
+    console.error("loadGalleryImages failed", err);
+    return {
+      ok: false,
+      message:
+        "We couldn’t load your gallery right now. Please refresh and try again. If this keeps happening, reach out to your photographer.",
+    };
   }
-
-  return { ok: true, images };
 }
